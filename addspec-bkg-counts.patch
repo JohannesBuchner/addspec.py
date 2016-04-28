@@ -1,0 +1,92 @@
+diff --git a/ftools/heasarc/src/addspec/addspec.f b/ftools/heasarc/src/addspec/addspec.f
+index 5ec4a7e..067c4ad 100644
+--- a/ftools/heasarc/src/addspec/addspec.f
++++ b/ftools/heasarc/src/addspec/addspec.f
+@@ -524,9 +524,8 @@ c ========================== THE BACKFILE ============================
+             call susbak(chatter,backfil(i),
+      &           bexp(i), bbscal(i), ierr)
+             if(ierr.NE.0) goto 482
+-            backtexp = backtexp + bexp(i)
++            backtexp = backtexp + bexp(i) * bbscal(i) / backscal(i)
+          enddo
+-         backtexp = backtexp*bexpscale
+ 
+ c --------------------------- MATHPHA -------------------------
+ c ... construct the command string and spawn MATHPHA task if necessary
+@@ -539,18 +538,11 @@ c ... construct the command string and spawn MATHPHA task if necessary
+             goto 482
+          endif
+ 
+-         factor = backscal(1)*bexpscale/bbscal(1)
+-         write(factstr,'(g12.6)') factor
+-         lgstring = '('//backfil(1)//'*'//factstr//')'
++         lgstring = backfil(1)
+          call crmvblk(lgstring)
+          do i = 2, nfiles 
+-            factor = backscal(i)*bexpscale/bbscal(i)
+-            write(factstr,'(g12.6)') factor
+-            call crmvblk(factstr)
+             ilen = clenact(lgstring)
+-            ilen2 = clenact(factstr)
+-            lgstring = lgstring(:ilen) // '+('//backfil(i)//
+-     &           '*'//factstr(:ilen2)//')'
++            lgstring = lgstring(:ilen) // '+'//backfil(i)//')'
+             call crmvblk(lgstring)
+          enddo
+          ilen = clenact(lgstring)
+@@ -579,8 +571,7 @@ c ... construct the command string and spawn MATHPHA task if necessary
+          str(8) = 'ncomments = 2'
+          str(9) = '"comment1 = Created_by_a_spawn_from_'//
+      &        'DO_ADDSPEC_v'// version//'"'
+-         str(10) = '"comment2 = NOTE - exposure_time_increased'//
+-     &        '_to_avoid_rounding_errors"'
++         str(10) = '"comment2 = Valid in Poisson stat."'
+          write(str(11),'(a,i12)') 'chatter=',schatter
+ 
+          nstrs = 11
+diff --git a/ftools/heasarc/src/addspec/addspec.hlp b/ftools/heasarc/src/addspec/addspec.hlp
+index 9dfb7de..c66371e 100644
+--- a/ftools/heasarc/src/addspec/addspec.hlp
++++ b/ftools/heasarc/src/addspec/addspec.hlp
+@@ -97,17 +97,6 @@ PHA dataset appropriate for use with the output PHA dataset. This can only be
+ performed if the input PHA datasets contain the necessary keyword (BACKFILE)
+ specifying the path and name of the relevant background file for each.
+ .le
+-.ls (bexpscale = 1000) [real]
+- A scaling factor to be used to avoid "rounding errors" in the background PHA
+-dataset. This factor is only important when qsubback=yes, units=C, and the
+-background datasets contain low count rates. In such cases, then this
+-parameter is a numerical factor by which the background counts (and
+-statistical errors) are multiplied by, prior to rescaling and addition to
+-create the output background PHA dataset. The exposure time in the output background
+-PHA dataset is also multiplied by this value in order to "correct" for this
+-procedure. It is recommended that this parameter has a value of at least the
+-default (bexpscale = 1000).
+-.le
+ .ls (properr='no') [character string]
+  A flag whether the errors are to propagated during the algebra, or 
+ (if properr='no') whether the errors are simply calculated from the
+diff --git a/ftools/heasarc/src/addspec/addspec.txt b/ftools/heasarc/src/addspec/addspec.txt
+index 698eeea..18a6bf6 100644
+--- a/ftools/heasarc/src/addspec/addspec.txt
++++ b/ftools/heasarc/src/addspec/addspec.txt
+@@ -108,19 +108,6 @@ PARAMETERS
+         contain the necessary keyword  (BACKFILE)  specifying  the  path
+         and name of the relevant background file for each.
+     
+-    (bexpscale = 1000) [real]
+-         A  scaling  factor to be used to avoid "rounding errors" in the
+-        background PHA dataset.  This  factor  is  only  important  when
+-        qsubback=yes,  units=C,  and the background datasets contain low
+-        count rates. In such cases, then this parameter is  a  numerical
+-        factor  by  which the background counts (and statistical errors)
+-        are multiplied by, prior to rescaling  and  addition  to  create
+-        the  output  background  PHA  dataset.  The exposure time in the
+-        output background PHA dataset is also multiplied by  this  value
+-        in  order  to  "correct"  for  this procedure. It is recommended
+-        that this  parameter  has  a  value  of  at  least  the  default
+-        (bexpscale = 1000).
+-    
+     (properr='no') [character string]
+          A  flag  whether  the  errors  are  to  propagated  during  the 
+         algebra, or (if properr='no')  whether  the  errors  are  simply
