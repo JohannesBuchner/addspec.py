@@ -109,9 +109,11 @@ def main(outprefix, filenames):
 	print("EXPOSURE:", exposures, bexposures)
 
 	weights = areascals * exposures
-	weightstr = ' '.join(['%e' % w for w in weights])
+	rel_weights = weights / weights.sum()
+	weightstr = ' '.join(['%e' % w for w in rel_weights])
 	bweights = bareascals * bexposures
-	bweightstr = ' '.join(['%e' % w for w in bweights])
+	rel_bweights = bweights / bweights.sum()
+	bweightstr = ' '.join(['%e' % w for w in rel_bweights])
 	assert len(arfs) == N
 	assert len(rmfs) == N
 	assert len(barfs) == N
@@ -136,7 +138,7 @@ def main(outprefix, filenames):
 		filenames = filenames,
 		areascals = areascals,
 		backscals = backscals,
-		rel_weights = weights / weights.sum(),
+		rel_weights = rel_weights,
 		ANCRFILE = arf,
 		RESPFILE = rmf,
 		BACKFILE = boutfile,
@@ -146,7 +148,7 @@ def main(outprefix, filenames):
 		filenames = bfilenames,
 		areascals = bareascals,
 		backscals = bbackscals,
-		rel_weights = bweights / bweights.sum(),
+		rel_weights = rel_bweights,
 		ANCRFILE = barf,
 		RESPFILE = brmf,
 	)
